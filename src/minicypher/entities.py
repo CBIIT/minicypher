@@ -17,7 +17,7 @@ def countmaker(max=10000):
 class Entity(object):
     """A property graph Entity. Base class."""
     def __init__(self):
-        self.As = None
+        self._as = None
         ct = None
         try:
             ct = next(type(self).count)
@@ -42,8 +42,8 @@ class Entity(object):
     def plain_var(self):
         return _plain_var(self)
         
-    def _as(self, alias):
-        return _as(self, alias)
+    def As(self, alias):
+        return _As(self, alias)
     
     def pattern(self):
         """Render entity as a match pattern."""
@@ -88,7 +88,7 @@ class N(Entity):
         self.props = {}
         self.label = label
         self._add_props(props)
-        self.As = As
+        self._as = As
 
     def relate_to(self, r: R, n: N) -> R:
         # always obj --> arg direction
@@ -109,7 +109,7 @@ class N(Entity):
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = " as {}".format(self.As) if self.As else ""
+        ret = " as {}".format(self._as) if self._as else ""
         ret = "{}{}".format(self._var, ret)
         return ret
 
@@ -125,7 +125,7 @@ class R(Entity):
         self._add_props(props)
         self._join = []
         self._dir = _dir
-        self.As = As
+        self._as = As
 
     # n --> m direction
     def relate(self, n : N, m : N) -> T:
@@ -146,7 +146,7 @@ class R(Entity):
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = " as {}".format(self.As) if self.As else ""
+        ret = " as {}".format(self._as) if self._as else ""
         ret = "{}{}".format(self._var, ret)
         return ret
 
@@ -221,7 +221,7 @@ class P(Entity):
         super().__init__()
         self.handle = handle
         self.value = value
-        self.As = As
+        self._as = As
         self.entity = None
         self.param = {self._var: value} if value else None
 
@@ -261,7 +261,7 @@ class P(Entity):
             return None
 
     def Return(self) -> str:
-        ret = " as {}".format(self.As) if self.As else ""
+        ret = " as {}".format(self._as) if self._as else ""
         if self.entity:
             return "{}.{}{}".format(self.entity._var, self.handle, ret)
         else:
@@ -546,12 +546,12 @@ class G(Entity):
 # modifiers
 
 
-def _as(ent : Entity, alias : str) -> Entity:
+def _As(ent : Entity, alias : str) -> Entity:
     """Return copy of ent with As alias set."""
     if isinstance(ent, T):
         return ent
     ret = clone(ent)
-    ret.As = alias
+    ret._as = alias
     return ret
 
 

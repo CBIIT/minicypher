@@ -3,7 +3,7 @@ import pytest
 
 from minicypher import *
 from minicypher.entities import (
-    _pattern, _as, _condition, _return,
+    _pattern, _As, _condition, _return,
     _plain, _anon, _var, _plain_var
     )
 from minicypher.clauses import Clause
@@ -14,7 +14,7 @@ def test_entities():
     assert isinstance(N0(), N)
     assert not N0().label
     assert not N0().props
-    assert not N0().As
+    assert not N0()._as
     assert not N0()._var
 
     n = N()
@@ -23,6 +23,7 @@ def test_entities():
     m = N(label="thing")
     assert m.label == "thing"
     assert n._var != m._var
+    assert m.As("THING")._as == "THING"
 
     assert n.pattern() == "({})".format(n._var)
     assert m.pattern() == "({}:thing)".format(m._var)
@@ -34,10 +35,10 @@ def test_entities():
     assert m.Return() == m._var
     assert _return(m) == m._var
 
-    assert _return(_as(m, "eddie")) == "{} as eddie".format(m._var)
+    assert _return(_As(m, "eddie")) == "{} as eddie".format(m._var)
     
     x = N(label="thing", As="dude")
-    assert x.label == "thing" and x.As == "dude"
+    assert x.label == "thing" and x._as == "dude"
     assert x.Return() == "{} as dude".format(x._var)
     
     # relationships
