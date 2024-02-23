@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "minicypher"
+version = "0.1.0"
+description = "Programmatically manipulate Neo4j Cypher language constructs"
+authors = ["Mark A. Jensen <mark.jensen@nih.gov>", "Nelson Moore <nelson.moore@essential-soft.com>"]
+readme = "README.md"
+packages = [{include = "minicypher", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+jsonschema = "^4.17.3"
+myst-nb = "^0.17.1"
+sphinx-autoapi = "^2.0.1"
+sphinx-rtd-theme = "^1.1.1"
+python-semantic-release = "^7.33.0"
+pytest-cov = "^4.0.0"
+
+[tool.semantic_release]
+version_variable = "pyproject.toml:version"
+branch = "main"
+changelog_file = "CHANGELOG.md"
+build_command = "poetry build"
+dist_path = "dist/"
+upload_to_release = true
+upload_to_pypi = false
+remove_dist = false
+patch_without_tag = true
+major_on_zero = false # while major version on 0.y.z, won't bump to 1.0.0
+version_source = "tag" # temp?
+
+[tool.pytest.ini_options]
+pythonpath = "./src"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
