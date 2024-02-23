@@ -4,6 +4,7 @@ minicypher.clauses
 Representations of Cypher statement clauses, statements,
 and statement parameters.
 """
+from __future__ import annotations
 from string import Template
 from .entities import (
     N, R, P, _return, _condition, _pattern
@@ -18,7 +19,7 @@ class Clause(object):
     joiner = ", "
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _return(arg)
 
     def __init__(self, *args, **kwargs):
@@ -46,7 +47,7 @@ class Match(Clause):
     template = Template("MATCH $slot1")
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _pattern(arg)
 
     def __init__(self, *args):
@@ -60,7 +61,7 @@ class Where(Clause):
     joiner = " {} "
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _condition(arg)
 
     def __init__(self, *args, op='AND'):
@@ -95,7 +96,7 @@ class Create(Clause):
     """Create a CREATE clause with the arguments."""
     template = Template("CREATE $slot1")
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _pattern(arg)
 
     def __init__(self, *args):
@@ -106,7 +107,7 @@ class Merge(Clause):
     """Create a MERGE clause with the arguments."""
     template = Template("MERGE $slot1")
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _pattern(arg)
 
     def __init__(self, *args):
@@ -141,7 +142,7 @@ class Set(Clause):
     template = Template("SET $slot1")
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _condition(arg)
 
     def __init__(self, *args, **kwargs):
@@ -194,7 +195,7 @@ class OptionalMatch(Clause):
     template = Template("OPTIONAL MATCH $slot1")
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _pattern(arg)
 
     def __init__(self, *args):
@@ -227,7 +228,7 @@ class As(Clause):
 
 class Statement(object):
     """Create a Neo4j statement comprised of clauses (and strings) in order."""
-    def __init__(self, *args, terminate=False, use_params=False):
+    def __init__(self, *args, terminate : bool = False, use_params : bool = False):
         self.clauses = args
         self.terminate = terminate
         self.use_params = use_params
@@ -246,7 +247,7 @@ class Statement(object):
         return ret
 
     @property
-    def params(self):
+    def params(self) -> dict[str, str]:
         if self._params is None:
             self._params = {}
             for c in self.clauses:

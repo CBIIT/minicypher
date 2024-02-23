@@ -3,6 +3,7 @@ minicypher.entities
 
 Representations of cypher nodes, relationships, properties, paths
 """
+from __future__ import annotations
 import re
 from pdb import set_trace
 from .functions import Func
@@ -82,18 +83,18 @@ class N(Entity):
     """A property graph Node."""
     count = countmaker()
 
-    def __init__(self, label=None, props=None, As=None):
+    def __init__(self, label : str = None, props : list[P] = None, As : str = None):
         super().__init__()
         self.props = {}
         self.label = label
         self._add_props(props)
         self.As = As
 
-    def relate_to(self, r, n):
+    def relate_to(self, r: R, n: N) -> R:
         # always obj --> arg direction
         return r.relate(self, n)
 
-    def pattern(self):
+    def pattern(self) -> str:
         ret = ",".join([p.pattern() for p in
                         self.props.values() if p.pattern()])
         if (len(ret)):
@@ -104,10 +105,10 @@ class N(Entity):
             ret = "({}{})".format(self._var, ret)
         return ret
 
-    def condition(self):
+    def condition(self) -> list:
         return [p.condition() for p in self.props.values()]
 
-    def Return(self):
+    def Return(self) -> str:
         ret = " as {}".format(self.As) if self.As else ""
         ret = "{}{}".format(self._var, ret)
         return ret
@@ -117,7 +118,7 @@ class R(Entity):
     """A property graph Relationship or edge."""
     count = countmaker()
 
-    def __init__(self, Type=None, props=None, As=None, _dir='_right'):
+    def __init__(self, Type : str = None, props : list[P] = None, As : str = None, _dir : str='_right'):
         super().__init__()
         self.props = {}
         self.Type = Type
@@ -127,10 +128,10 @@ class R(Entity):
         self.As = As
 
     # n --> m direction
-    def relate(self, n, m):
+    def relate(self, n : N, m : N) -> T:
         return T(n, self, m) if self._dir == '_right' else T(m, self, n)
 
-    def pattern(self):
+    def pattern(self) -> str:
         ret = ",".join([p.pattern() for p in
                         self.props.values() if p.pattern()])
         if (len(ret)):
@@ -141,10 +142,10 @@ class R(Entity):
             ret = "-[{}{}]-".format(self._var, ret)
         return ret
 
-    def condition(self):
+    def condition(self) -> str:
         return [p.condition() for p in self.props.values()]
 
-    def Return(self):
+    def Return(self) -> str:
         ret = " as {}".format(self.As) if self.As else ""
         ret = "{}{}".format(self._var, ret)
         return ret
@@ -154,7 +155,8 @@ class VarLenR(R):
     def __init__(self,
                  min_len: int = -1,
                  max_len: int = -1, 
-                 Type=None, props=None, As=None, _dir='_right'):
+                 Type : str = None, props : list[P] = None, As : str = None,
+                 _dir : str = '_right'):
         super().__init__()
         self.props = {}
         self.Type = Type
@@ -162,7 +164,7 @@ class VarLenR(R):
         self.min_len = min_len
         self.max_len = max_len
 
-    def pattern(self):
+    def pattern(self) -> str:
         ret = ",".join([p.pattern() for p in
                         self.props.values() if p.pattern()])
         var_len = "*"
@@ -190,7 +192,7 @@ class N0(N):
         super().__init__()
         self._var = None
 
-    def pattern(self):
+    def pattern(self) -> "str":
         return "()"
 
     def Return(self):
@@ -203,7 +205,7 @@ class R0(R):
         super().__init__()
         self._var = None
 
-    def pattern(self):
+    def pattern(self) -> str:
         return "--"
 
     def Return(self):
@@ -215,7 +217,7 @@ class P(Entity):
     count = countmaker()
     parameterize = False
 
-    def __init__(self, handle, value=None, As=None):
+    def __init__(self, handle : str, value : Any = None, As : str = None):
         super().__init__()
         self.handle = handle
         self.value = value
@@ -223,10 +225,10 @@ class P(Entity):
         self.entity = None
         self.param = {self._var: value} if value else None
 
-    def with_value(self, val):
+    def with_value(self, val : Any) -> P:
         return _value(self, val)
     
-    def pattern(self):
+    def pattern(self) -> str:
         if self.value:
             if not self.parameterize:
                 if not type(self.value) == str:
@@ -240,7 +242,7 @@ class P(Entity):
         else:
             return None
 
-    def condition(self):
+    def condition(self) -> str:
         if self.value and self.entity:
             if not self.parameterize:
                 if not type(self.value) == str:
@@ -258,7 +260,7 @@ class P(Entity):
         else:
             return None
 
-    def Return(self):
+    def Return(self) -> str:
         ret = " as {}".format(self.As) if self.As else ""
         if self.entity:
             return "{}.{}{}".format(self.entity._var, self.handle, ret)
@@ -270,28 +272,28 @@ class T(Entity):
     """A property graph Triple; i.e., (n)-[r]->(m)."""
     count = countmaker()
 
-    def __init__(self, n, r, m):
+    def __init__(self, n : N, r : R, m : N):
         super().__init__()
         self._from = n
         self._to = m
         self._edge = r
 
-    def nodes(self):
+    def nodes(self) -> list[N]:
         return [self._from, self._to]
 
-    def edge(self):
+    def edge(self) -> R:
         return self._edge
 
-    def edges(self):
+    def edges(self) -> list[R]:
         return [self.edge()]
 
-    def pattern(self):
+    def pattern(self) -> str:
         return self._from.pattern()+self._edge.pattern()+">"+self._to.pattern()
 
-    def condition(self):
+    def condition(self) -> str:
         return self.pattern()
 
-    def Return(self):
+    def Return(self) -> list[str]:
         return [x.Return() for x
                 in (self._from, self._edge, self._to) if x._var]
 
@@ -300,16 +302,16 @@ class NoDirT(T):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def pattern(self):
+    def pattern(self) -> str:
         return self._from.pattern()+self._edge.pattern()+self._to.pattern()
 
-    def nodes(self):
+    def nodes(self) -> list[N]:
         return [self._from, self._to]
 
-    def edge(self):
+    def edge(self) -> R:
         return self._edge
 
-    def edges(self):
+    def edges(self) -> list[R]:
         return [self.edge()]
 
 class G(Entity):
@@ -485,20 +487,20 @@ class G(Entity):
             self.triples.extend(ent.triples)
         return True
 
-    def nodes(self):
+    def nodes(self) -> list[N]:
         ret = set()
         for t in self.triples:
             ret.add(t._from)
             ret.add(t._to)
         return list(ret)
 
-    def edges(self):
+    def edges(self) -> list[R]:
         ret = set()
         for t in self.triples:
             ret.add(t._edge)
         return list(ret)
 
-    def pattern(self):
+    def pattern(self) -> str:
         def jn(trps, acc, ret):
             if not trps:
                 ret.append(acc)
@@ -532,10 +534,10 @@ class G(Entity):
             self._pattern = ", ".join(pats)
         return self._pattern
 
-    def condition(self):
+    def condition(self) -> str:
         return self.pattern()
 
-    def Return(self):
+    def Return(self) -> str:
         s = ()
         for t in self.triples:
             s.add(t._from, t._to)
@@ -544,7 +546,7 @@ class G(Entity):
 # modifiers
 
 
-def _as(ent, alias):
+def _as(ent : Entity, alias : str) -> Entity:
     """Return copy of ent with As alias set."""
     if isinstance(ent, T):
         return ent
@@ -553,7 +555,7 @@ def _as(ent, alias):
     return ret
 
 
-def _plain(ent):
+def _plain(ent : Entity) -> Entity:
     """Return entity without properties."""
     ret = None
     if isinstance(ent, (N, R)):
@@ -572,13 +574,14 @@ def _plain(ent):
     return ret
 
 
-def _anon(ent):
+def _anon(ent : Entity) -> Entity:
     """Return entity without variable name."""
     ret = clone(ent)
     ret._var = ""
     return ret
 
-def _var(ent):
+
+def _var(ent : Entity) -> Entity:
     """Return entity without label or type."""
     ret = None
     if isinstance(ent, (N, R)):
@@ -597,12 +600,12 @@ def _var(ent):
     return ret
 
 
-def _plain_var(ent):
+def _plain_var(ent : Entity) -> Entity:
     """Return entity with only the variable, no label or properties"""
     return _plain(_var(ent))
 
 
-def _value(ent, val):
+def _value(ent : Entity, val : Any) -> Entity:
     """Return a copy of Property with value set to val. Noop for other entities."""
     ret = ent
     if isinstance(ent, P):

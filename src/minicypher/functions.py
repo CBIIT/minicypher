@@ -3,6 +3,7 @@ minicypher.functions
 
 Representations of Cypher functions
 """
+from __future__ import annotations
 from string import Template
 
 # cypher functions
@@ -14,7 +15,7 @@ class Func(object):
     As = ""
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _return(arg)
 
     def __init__(self, arg):
@@ -56,7 +57,7 @@ class And(Func):
     joiner = " AND "
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _condition(arg)
 
     def __init__(self, *args):
@@ -69,7 +70,7 @@ class Or(Func):
     joiner = " OR "
 
     @staticmethod
-    def context(arg):
+    def context(arg) -> str:
         return _condition(arg)
 
     def __init__(self, *args):
@@ -92,19 +93,19 @@ class is_not_null(Func):
 # rendering contexts
 
 
-def _pattern(ent):
+def _pattern(ent : Entity) -> str:
     if isinstance(ent, (str, Func)):
         return str(ent)
     return ent.pattern()
 
 
-def _condition(ent):
+def _condition(ent : Entity) -> str:
     if isinstance(ent, (str, Func)):
         return str(ent)
     return ent.condition()
 
 
-def _return(ent):
+def _return(ent : Entity) -> str:
     if isinstance(ent, (str, Func)):
         return str(ent)
     return ent.Return()
