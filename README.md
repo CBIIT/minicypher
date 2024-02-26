@@ -40,7 +40,7 @@ which they appear. minicypher will render them in a statement appropriately.
     stmt = Statement(
              Match( R('played_in').anon().relate(actor.plain(), movie.plain()) ),
 			 Where( actor.props['name'] ),
-			 Return( movie.props['title']._as('Title') ))
+			 Return( movie.props['title'].As('Title') ))
 
 When `stmt` is rendered as a string, e.g., when printed, it yields the query:
 
@@ -51,7 +51,98 @@ When `stmt` is rendered as a string, e.g., when printed, it yields the query:
 
 with dummy variables n0 and n1 correctly placed.
 
-## Examples
+## Entities, Clauses, Functions, Statements
+
+### Entities: Nodes, Relationships, and Properties
+
+The basic idea is that a node, relationship, or property instance
+knows how to behave depending on where it shows up in a
+statement. Using the same instance in different parts of a statement
+will ensure that the variable name stays the same, for
+example. Variable names are provided automatically.
+
+Constructors for entities:
+
+| Entity | Constructor |
+| --- | --- |
+| Node | `N(label=,props=,As=)` |
+| Relationship | `R(Type=,props=,As=)` |
+| Property | `P(handle=,value=,As=)` |
+
+Properties are associated with a node or relationship as members of
+the `.props` attribute, a dict. Property instances can be provided
+with a value; this value is rendered in a statement depending on
+whether the property appears in a Cypher pattern, a Where clause, or a
+Return clause.
+
+Example:
+
+    actor = N('Actor', P('name', 'Sean Connery'))
+
+Then the property instance 'name' is accessed as
+`actor.props["name"]`, and its value is at
+`actor.props["name"].value`.
+
+In a Cypher MATCH pattern, a node or relationship may be represented
+in different ways - from anonymous entities, as in  `()-[]->()`, to
+entities with variable names and property maps specified, as in
+`(m:Movie {title:"Goldeneye"})<-[r:acted_in]-(a:Actor {name:"Sean
+Connery"})`. The modifier methods `.anon()`, `.var()`, `.plain()`, and
+`.plain_var()` provide control over what information is rendered in
+the final Statement.
+
+| This item | is rendered as | Notes |
+| --- | --- | --- |
+| `actor` | `(n:Actor {name:"Sean Connery"})` | Both label and
+| property map are produced by default |
+| `actor.anon()` | `(:Actor {name: "Sean Connery"})` | Do not produce
+| the variable |
+| `actor.var()` | `(n {name: "Sean Connery"})` | Do not produce the
+| label (or relationship type |
+| `actor.plain()` | `(n:Actor)` | Do not produce the property map |
+| `actor.plain_var()` | `(n)` | Only produce the variable name |
+
+### Clauses and Statements
+
+Clauses correspond to parts of a Cypher statement prefaced by a keyword,
+such as `MATCH`, `WHERE`, or `RETURN`. Clause instances provide a
+context for rendering their arguments (nodes, relationships,
+properties) so that they try to  "do what you mean."
+
+The `Match()` clause treats its arguments as elements of a Cypher
+graph pattern. If nodes or relationships have properties with values
+set, the property map is rendered by default. See the table above to 
+tweak the pattern production with modifier methods.
+
+The `Where()` clause considers its arguments as participating in a
+boolean condition. If a property instance on a node or relationship 
+has a set value, then in a `Where()` clause, an equals condition is
+for the property is produced:
+
+    >>> n = N('', [ P('this', 1), P('that', 2)])
+    >>> print(Where(n))
+    WHERE n0.this = 1 AND n0.that = 2
+
+Override this behavior by referencing the properties directly.
+
+    >>> print(Where(n.props['this']))
+	WHERE n0.this = 1
+    >>> print(Where(n.props['that'].with_value(3)))
+    WHERE n0.that = 3
+
+The `Return()` and other clauses render their arguments as variables,
+or as aliases if the `.As` attribute is set to a desired alias.
+
+Clauses are strung together in order as arguments to a `Statement()`
+constructor. When printed or otherwise used as a string, a Statement
+instance yields a Cypher query. The Statement instance can also
+parameterize the statement and provide a dict of params and values.
+
+Plain strings as arguments to `Statement()` will be rendered verbatim.
+
+
+
+
 
 
 
