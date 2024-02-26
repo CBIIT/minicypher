@@ -4,31 +4,34 @@ minicypher.functions
 Representations of Cypher functions
 """
 from __future__ import annotations
+import typing
 from string import Template
 
 # cypher functions
 
 
 class Func(object):
-    template = Template("func(${slot1})")
+    template = Template("${slot1}")
     joiner = ','
-    As = ""
 
     @staticmethod
     def context(arg) -> str:
         return _return(arg)
 
-    def __init__(self, arg):
+    def __init__(self, arg : Any, template_str : str = None, As : str = None):
+        if (template_str):
+            self.template = Template(template_str)
         self.arg = arg
+        self._as = As
 
     def __str__(self):
         slot = ""
-        if type(self.arg) == list:
+        if type(self.arg) is list:
             slot = self.joiner.join([self.context(a) for a in self.arg])
         else:
             slot = self.context(self.arg)
-        if self.As:
-            return self.template.substitute(slot1=slot)+" as "+self.As
+        if self._as:
+            return self.template.substitute(slot1=slot)+" as "+self._as
         else:
             return self.template.substitute(slot1=slot)
 
@@ -39,6 +42,7 @@ class count(Func):
 
 class exists(Func):
     template = Template("exists($slot1)")
+
 
 class labels(Func):
     template = Template("labels($slot1)")
