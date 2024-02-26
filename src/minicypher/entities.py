@@ -58,19 +58,19 @@ class Entity(object):
         pass
 
     def _add_props(self, props):
-        if not type(self) == N and not type(self) == R:
+        if not type(self) is N and type(self) is not R:
             return False
         if not props:
             return True
-        if type(props) == P:
+        if type(props) is P:
             props.entity = self
             self.props[props.handle] = props
-        elif type(props) == list:
+        elif type(props) is list:
             for p in props:
                 p.entity = self
             for p in props:
                 self.props[p.handle] = p
-        elif type(props) == dict:
+        elif type(props) is dict:
             for hdl in props:
                 self.props[hdl] = P(handle=hdl, value=props[hdl])
                 self.props[hdl].entity = self
@@ -150,6 +150,7 @@ class R(Entity):
         ret = "{}{}".format(self._var, ret)
         return ret
 
+
 class VarLenR(R):
     """Variable length property graph Relationship or edge."""
     def __init__(self,
@@ -185,6 +186,7 @@ class VarLenR(R):
         else:
             ret = f"-[{ret}{var_len}]-"
         return ret
+
 
 class N0(N):
     """Completely anonymous node ()."""
@@ -231,7 +233,7 @@ class P(Entity):
     def pattern(self) -> str:
         if self.value:
             if not self.parameterize:
-                if not type(self.value) == str:
+                if type(self.value) is not str:
                     return "{}:{}".format(self.handle, str(self.value))
                 elif re.match("^\\s*[$]", self.value):  # a parameter
                     return "{}:{}".format(self.handle, self.value)
@@ -245,7 +247,7 @@ class P(Entity):
     def condition(self) -> str:
         if self.value and self.entity:
             if not self.parameterize:
-                if not type(self.value) == str:
+                if type(self.value) is not str:
                     return "{}.{} = {}".format(self.entity._var, self.handle,
                                                str(self.value))
                 elif re.match("^\\s*[$]", self.value):  # a parameter
@@ -297,6 +299,7 @@ class T(Entity):
         return [x.Return() for x
                 in (self._from, self._edge, self._to) if x._var]
 
+
 class NoDirT(T):
     """A directionless property graph Triple; i.e., (n)-[r]-(m)."""
     def __init__(self, *args):
@@ -313,6 +316,7 @@ class NoDirT(T):
 
     def edges(self) -> list[R]:
         return [self.edge()]
+
 
 class G(Entity):
     """A property graph Path.
@@ -613,8 +617,6 @@ def _value(ent : Entity, val : Any) -> Entity:
         ret.value = val
     return ret
     
-
-
 # rendering contexts
 
 
