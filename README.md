@@ -98,7 +98,7 @@ the final Statement.
 | `actor.anon()` | `(:Actor {name: "Sean Connery"})` | Do not produce
 | the variable |
 | `actor.var()` | `(n {name: "Sean Connery"})` | Do not produce the
-| label (or relationship type |
+| label (or relationship type) |
 | `actor.plain()` | `(n:Actor)` | Do not produce the property map |
 | `actor.plain_var()` | `(n)` | Only produce the variable name |
 
