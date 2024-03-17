@@ -113,6 +113,7 @@ class Merge(Clause):
     def __init__(self, *args):
         super().__init__(*args)
 
+
 class Remove(Clause):
     """Create a REMOVE clause with the arguments."""
     template = Template("REMOVE $slot1")
@@ -213,6 +214,7 @@ class Collect(Clause):
 
     def context(arg : object) -> str:
         return _substitution(arg)
+
 
 # should be a Func? 
 class Unwind(Clause):
