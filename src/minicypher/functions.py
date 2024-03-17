@@ -6,6 +6,9 @@ Representations of Cypher functions
 from __future__ import annotations
 import typing
 from string import Template
+from .entities import (
+    _return, _condition, _pattern, _substitution
+    )
 
 # cypher functions
 
@@ -15,7 +18,7 @@ class Func(object):
     joiner = ','
 
     @staticmethod
-    def context(arg) -> str:
+    def arg_context(arg : object) -> str:
         return _return(arg)
 
     def __init__(self, arg : Any, template_str : str = None, As : str = None):
@@ -23,13 +26,26 @@ class Func(object):
             self.template = Template(template_str)
         self.arg = arg
         self._as = As
+    
+    def __str__(self) -> str:
+        return self.Return()
 
-    def __str__(self):
+    def condition(self) -> str:
+        return self.substitution()
+    
+    def substitution(self) -> str:
+        if self._as:
+            return "{}".format(self._as)
+        else:
+            return self.Return()
+
+    def Return(self) -> str:
         slot = ""
         if type(self.arg) is list:
-            slot = self.joiner.join([self.context(a) for a in self.arg])
+            slot = self.joiner.join([self.arg_context(a) for a in self.arg])
         else:
-            slot = self.context(self.arg)
+            slot = self.arg_context(self.arg)
+        
         if self._as:
             return self.template.substitute(slot1=slot)+" as "+self._as
         else:
@@ -52,7 +68,7 @@ class Not(Func):
     template = Template("NOT $slot1")
 
     @staticmethod
-    def context(arg):
+    def arg_context(arg : object) -> str:
         return _condition(arg)
 
 
@@ -61,7 +77,7 @@ class And(Func):
     joiner = " AND "
 
     @staticmethod
-    def context(arg) -> str:
+    def arg_context(arg : object) -> str:
         return _condition(arg)
 
     def __init__(self, *args):
@@ -74,7 +90,7 @@ class Or(Func):
     joiner = " OR "
 
     @staticmethod
-    def context(arg) -> str:
+    def arg_context(arg : object) -> str:
         return _condition(arg)
 
     def __init__(self, *args):
@@ -94,22 +110,3 @@ class is_null(Func):
 class is_not_null(Func):
     template = Template("$slot1 IS NOT NULL")
 
-# rendering contexts
-
-
-def _pattern(ent : Entity) -> str:
-    if isinstance(ent, (str, Func)):
-        return str(ent)
-    return ent.pattern()
-
-
-def _condition(ent : Entity) -> str:
-    if isinstance(ent, (str, Func)):
-        return str(ent)
-    return ent.condition()
-
-
-def _return(ent : Entity) -> str:
-    if isinstance(ent, (str, Func)):
-        return str(ent)
-    return ent.Return()

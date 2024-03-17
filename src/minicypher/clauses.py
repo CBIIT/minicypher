@@ -7,7 +7,7 @@ and statement parameters.
 from __future__ import annotations
 from string import Template
 from .entities import (
-    N, R, P, _return, _condition, _pattern
+    N, R, P, _return, _condition, _pattern, _substitution
     )
 from .functions import Func
 from pdb import set_trace
@@ -31,8 +31,6 @@ class Clause(object):
         for c in [self.context(x) for x in self.args]:
             if isinstance(c, str):
                 values.append(c)
-            elif isinstance(c, Func):
-                values.append(str(c))
             elif isinstance(c, list):
                 values.extend([str(x) for x in c])
             else:
@@ -91,6 +89,8 @@ class With(Clause):
     def __init__(self, *args):
         super().__init__(*args)
 
+    def context(arg : object) -> str:
+        return _return(arg)
 
 class Create(Clause):
     """Create a CREATE clause with the arguments."""
@@ -119,6 +119,10 @@ class Remove(Clause):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @staticmethod    
+    def context(arg : object) -> str:
+        return _substitution(arg)
 
     def __str__(self):
         ent = self.args[0]
@@ -153,8 +157,6 @@ class Set(Clause):
         for c in [self.context(x) for x in self.args if isinstance(x, P)]:
             if isinstance(c, str):
                 values.append(c)
-            elif isinstance(c, Func):
-                values.append(str(c))
             elif isinstance(c, list):
                 values.extend([str(x) for x in c])
             else:
@@ -209,7 +211,10 @@ class Collect(Clause):
     def __init__(self, *args):
         super().__init__(*args)
 
+    def context(arg : object) -> str:
+        return _substitution(arg)
 
+# should be a Func? 
 class Unwind(Clause):
     """Create an UNWIND clause with the arguments."""
     template = Template("UNWIND $slot1")
@@ -224,6 +229,9 @@ class As(Clause):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+    def context(arg : object) -> str:
+        return _return(arg)
 
 
 class Statement(object):

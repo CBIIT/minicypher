@@ -6,7 +6,6 @@ Representations of cypher nodes, relationships, properties, paths
 from __future__ import annotations
 import re
 from pdb import set_trace
-from .functions import Func
 from copy import deepcopy as clone
 
 
@@ -52,6 +51,12 @@ class Entity(object):
     def condition(self):
         """Render entity as a condition (for WHERE, e.g.)."""
         pass
+
+    def substitution(self) -> str:
+        if self._as:
+            return "{}".format(self._as)
+        else:
+            return self.Return()
 
     def Return(self):
         """Render entity as a return value."""
@@ -619,20 +624,25 @@ def _value(ent : Entity, val : Any) -> Entity:
     
 # rendering contexts
 
-
 def _pattern(ent):
-    if isinstance(ent, (str, Func)):
-        return str(ent)
+    if type(ent) == str:
+        return ent
     return ent.pattern()
 
 
 def _condition(ent):
-    if isinstance(ent, (str, Func)):
-        return str(ent)
+    if type(ent) == str:
+        return ent
     return ent.condition()
 
 
+def _substitution(ent):
+    if type(ent) == str:
+        return ent
+    return ent.substitution()
+
+
 def _return(ent):
-    if isinstance(ent, (str, Func)):
-        return str(ent)
+    if type(ent) == str:
+        return ent
     return ent.Return()
