@@ -60,6 +60,17 @@ def test_clauses():
     assert isinstance(st, Clause)
     assert str(st) == "ON CREATE SET {n}.model = 'ICDC', {n}.handle = 'diagnosis'".format(n=n._var)
 
+    N._reset_counter()
+    n = N(props=[P("this",1)])
+    m = N(props=[P("that",2)])
+    st = Where(And(n, m))
+    assert str(st) == "WHERE n0.this = 1 AND n1.that = 2"
+    st = Where(Or(n, m))
+    assert str(st) == "WHERE n0.this = 1 OR n1.that = 2"
+    st = Where(Cat(n.props['this'],"> 1"))
+    assert str(st) == "WHERE n0.this > 1"
+    
+def test_as_substitutions():
     # AS substitutions
 
     #     MATCH (user)-[:FRIEND]-(friend)
@@ -79,4 +90,6 @@ def test_clauses():
     assert str(st) == "WHERE friends > 10"
     st = Where("friends > 10")
     assert str(st) == "WHERE friends > 10"
+    st = With(u, Func(f, name="count").As("friends"))
+    assert str(st) == "WITH user, count(friend) AS friends"
 

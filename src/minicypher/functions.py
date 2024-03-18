@@ -19,11 +19,17 @@ class Func(object):
 
     @staticmethod
     def arg_context(arg : object) -> str:
-        return _return(arg)
+        return _substitution(arg)
 
-    def __init__(self, *args : Any, template_str : str = None, As : str = None):
-        if (template_str):
+    def __init__(self, *args : Any, name : str = None,
+                 template_str : str = None, As : str = None):
+        if (name):
+            self.template = Template(f'{name}(${{slot1}})')
+        elif (template_str):
             self.template = Template(template_str)
+        else:
+            pass
+
         self.arg = list(args)
         self._as = As
     
@@ -43,16 +49,23 @@ class Func(object):
             return self.Return()
 
     def Return(self) -> str:
-        slot = ""
+        val = ""
         if type(self.arg) is list:
-            slot = self.joiner.join([self.arg_context(a) for a in self.arg])
+            items = []
+            for a in self.arg:
+                it = type(self).arg_context(a)
+                if type(it) == list:
+                    items.extend(it)
+                else:
+                    items.append(it)
+            val = self.joiner.join(items)
         else:
-            slot = self.arg_context(self.arg)
+            val = self.arg_context(self.arg)
         
         if self._as:
-            return self.template.substitute(slot1=slot)+" AS "+self._as
+            return self.template.substitute(slot1=val)+" AS "+self._as
         else:
-            return self.template.substitute(slot1=slot)
+            return self.template.substitute(slot1=val)
 
 
 class count(Func):
@@ -83,10 +96,6 @@ class And(Func):
     def arg_context(arg : object) -> str:
         return _condition(arg)
 
-    def __init__(self, *args):
-        self.arg = list(args)
-        super().__init__(self.arg)
-
 
 class Or(Func):
     template = Template("$slot1")
@@ -95,10 +104,6 @@ class Or(Func):
     @staticmethod
     def arg_context(arg : object) -> str:
         return _condition(arg)
-
-    def __init__(self, *args):
-        self.arg = list(args)
-        super().__init__(self.arg)
 
 
 class group(Func):
@@ -124,5 +129,4 @@ class Cat(Func):
 
     template = Template("${slot1}")
     joiner = " "
-
 
