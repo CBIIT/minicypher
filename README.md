@@ -65,9 +65,9 @@ Constructors for entities:
 
 | Entity | Constructor |
 | --- | --- |
-| Node | `N(label=,props=,As=)` |
-| Relationship | `R(Type=,props=,As=)` |
-| Property | `P(handle=,value=,As=)` |
+| Node | `N(label=,props=,As=,var=)` |
+| Relationship | `R(Type=,props=,As=,var=)` |
+| Property | `P(handle=,value=,As=,var=)` |
 
 Properties are associated with a node or relationship as members of
 the `.props` attribute, a dict. Property instances can be provided
@@ -133,20 +133,57 @@ Override this behavior by referencing the properties directly.
 The `Return()` and other clauses render their arguments as variables,
 or as aliases if the `.As` attribute is set to a desired alias.
 
+### Functions
+
+Cypher functions, such as `count()`, `labels()`, `ltrim()`, and others
+that appear in conditions or return clauses can be produced with the
+`Func` class. Instances should know how to render themselves
+and their arguments depending on context and the presence of `AS`
+aliases.
+
+To render a function like `labels()`, with a simple name and
+argument(s) in parens, use the `name` parameter in a `Func()`
+constructor:
+
+    >>> n = N('this:that',var='node')
+	>>> f = Func(n, name='labels')
+    >>> print(f)
+    labels(node)
+	>>> print(f.As('lbls'))
+	labels(node) AS lbls
+	>>> print(Func(n, name='labels').As('lbls').substitution())
+	lbls
+
+Additional arguments will be added as expected:
+
+	>>> print(Func(n, "x", "y", name="location"))
+	location(n0,x,y)
+
+A few functions with special rendering are provided: `And`, `Or`,
+`Not`, `is_null`, `is_not_null`:
+
+    >>> n = N(props=[P("this",1)])
+	>>> m = N(props=[P("that",2)])
+    >>> print(Where(AND(n, m)))
+	WHERE n0.this = 1 AND n1.that = 2
+
+    >>> print(Where(is_not_null(n)))
+    WHERE n0 IS NOT NULL
+
+The `Cat` (concatentate) class can be used to construct other infix
+functions (like `>`, `<`) appropriately:
+
+    >>> val = 1
+    >>> print(Where(Cat(n.props['this'],f"> {val}")))
+    WHERE n0.this > 1
+
+### Statements
+
 Clauses are strung together in order as arguments to a `Statement()`
 constructor. When printed or otherwise used as a string, a Statement
 instance yields a Cypher query. The Statement instance can also
 parameterize the statement and provide a dict of params and values.
 
-Plain strings as arguments to `Statement()` will be rendered verbatim.
-
-
-
-
-
-
-
-
-
-
+Plain strings as arguments to clause constructors and `Statement()`
+will be rendered verbatim.
 
