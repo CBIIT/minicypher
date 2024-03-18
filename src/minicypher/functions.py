@@ -7,7 +7,7 @@ from __future__ import annotations
 import typing
 from string import Template
 from .entities import (
-    _return, _condition, _pattern, _substitution
+    _As, _return, _condition, _pattern, _substitution
     )
 
 # cypher functions
@@ -21,14 +21,17 @@ class Func(object):
     def arg_context(arg : object) -> str:
         return _return(arg)
 
-    def __init__(self, arg : Any, template_str : str = None, As : str = None):
+    def __init__(self, *args : Any, template_str : str = None, As : str = None):
         if (template_str):
             self.template = Template(template_str)
-        self.arg = arg
+        self.arg = list(args)
         self._as = As
     
     def __str__(self) -> str:
         return self.Return()
+
+    def As(self, alias) -> Func:
+        return _As(self, alias)
 
     def condition(self) -> str:
         return self.substitution()
@@ -47,7 +50,7 @@ class Func(object):
             slot = self.arg_context(self.arg)
         
         if self._as:
-            return self.template.substitute(slot1=slot)+" as "+self._as
+            return self.template.substitute(slot1=slot)+" AS "+self._as
         else:
             return self.template.substitute(slot1=slot)
 
@@ -109,4 +112,17 @@ class is_null(Func):
 
 class is_not_null(Func):
     template = Template("$slot1 IS NOT NULL")
+
+    
+class Cat(Func):
+    """Concatentate string representations of the arguments with spaces.
+    Example: to produce "count(a) > 1", use concat(count("a"),"> 1")."""
+
+    @staticmethod
+    def arg_context(arg : object) -> str:
+        return _substitution(arg)
+
+    template = Template("${slot1}")
+    joiner = " "
+
 

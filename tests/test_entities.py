@@ -34,10 +34,14 @@ def test_entities():
     assert m.Return() == m._var
 
     assert _return(_As(m, "eddie")) == "{} as eddie".format(m._var)
+    assert m.As("eddie").Return() == "{} as eddie".format(m._var)
     
     x = N(label="thing", As="dude")
     assert x.label == "thing" and x._as == "dude"
     assert x.Return() == "{} as dude".format(x._var)
+
+    y = N(var="y")
+    assert y._var == "y"
     
     # relationships
     assert isinstance(R0(), R)

@@ -28,7 +28,7 @@ class Clause(object):
 
     def __str__(self):
         values = []
-        for c in [self.context(x) for x in self.args]:
+        for c in [type(self).context(x) for x in self.args]:
             if isinstance(c, str):
                 values.append(c)
             elif isinstance(c, list):

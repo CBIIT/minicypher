@@ -15,15 +15,18 @@ def countmaker(max=10000):
 
 class Entity(object):
     """A property graph Entity. Base class."""
-    def __init__(self):
+    def __init__(self, var = None):
         self._as = None
         ct = None
-        try:
-            ct = next(type(self).count)
-        except StopIteration:
-            type(self)._reset_counter()
-            ct = next(type(self).count)
-        self._var = type(self).__name__[0].lower() + str(ct)
+        if var:
+            self._var = var
+        else:
+            try:
+                ct = next(type(self).count)
+            except StopIteration:
+                type(self)._reset_counter()
+                ct = next(type(self).count)
+            self._var = type(self).__name__[0].lower() + str(ct)
 
     @classmethod
     def _reset_counter(cls):
@@ -88,8 +91,8 @@ class N(Entity):
     """A property graph Node."""
     count = countmaker()
 
-    def __init__(self, label : str = None, props : list[P] = None, As : str = None):
-        super().__init__()
+    def __init__(self, label : str = None, props : list[P] = None, As : str = None, **kwargs):
+        super().__init__(**kwargs)
         self.props = {}
         self.label = label
         self._add_props(props)
@@ -123,8 +126,9 @@ class R(Entity):
     """A property graph Relationship or edge."""
     count = countmaker()
 
-    def __init__(self, Type : str = None, props : list[P] = None, As : str = None, _dir : str='_right'):
-        super().__init__()
+    def __init__(self, Type : str = None, props : list[P] = None,
+                 As : str = None, _dir : str='_right', **kwargs):
+        super().__init__(**kwargs)
         self.props = {}
         self.Type = Type
         self._add_props(props)
@@ -162,8 +166,9 @@ class VarLenR(R):
                  min_len: int = -1,
                  max_len: int = -1, 
                  Type : str = None, props : list[P] = None, As : str = None,
-                 _dir : str = '_right'):
-        super().__init__()
+                 _dir : str = '_right',
+                 **kwargs):
+        super().__init__(**kwargs)
         self.props = {}
         self.Type = Type
         self._add_props(props)
@@ -224,8 +229,8 @@ class P(Entity):
     count = countmaker()
     parameterize = False
 
-    def __init__(self, handle : str, value : Any = None, As : str = None):
-        super().__init__()
+    def __init__(self, handle : str, value : Any = None, As : str = None, **kwargs):
+        super().__init__(**kwargs)
         self.handle = handle
         self.value = value
         self._as = As

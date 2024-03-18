@@ -61,4 +61,22 @@ def test_clauses():
     assert str(st) == "ON CREATE SET {n}.model = 'ICDC', {n}.handle = 'diagnosis'".format(n=n._var)
 
     # AS substitutions
-    
+
+    #     MATCH (user)-[:FRIEND]-(friend)
+    #     WHERE user.name = $name
+    #     WITH user, count(friend) AS friends
+    #     WHERE friends > 10
+    #     RETURN user
+
+    u = N(var="user")
+    f = N(var="friend")
+    c = count(f)
+    st = With(u, c.As("friends"))
+    assert str(st) == "WITH user, count(friend) AS friends"
+    st = Where(Cat(c, "> 10"))
+    assert str(st) == "WHERE count(friend) > 10"
+    st = Where(Cat(c.As("friends"), "> 10"))
+    assert str(st) == "WHERE friends > 10"
+    st = Where("friends > 10")
+    assert str(st) == "WHERE friends > 10"
+
