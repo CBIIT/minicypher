@@ -93,12 +93,9 @@ the final Statement.
 
 | This item | is rendered as | Notes |
 | --- | --- | --- |
-| `actor` | `(n:Actor {name:"Sean Connery"})` | Both label and
-| property map are produced by default |
-| `actor.anon()` | `(:Actor {name: "Sean Connery"})` | Do not produce
-| the variable |
-| `actor.var()` | `(n {name: "Sean Connery"})` | Do not produce the
-| label (or relationship type) |
+| `actor` | `(n:Actor {name:"Sean Connery"})` | Both label and property map are produced by default |
+| `actor.anon()` | `(:Actor {name: "Sean Connery"})` | Do not produce the variable |
+| `actor.var()` | `(n {name: "Sean Connery"})` | Do not produce the label (or relationship type) |
 | `actor.plain()` | `(n:Actor)` | Do not produce the property map |
 | `actor.plain_var()` | `(n)` | Only produce the variable name |
 
@@ -116,7 +113,7 @@ tweak the pattern production with modifier methods.
 
 The `Where()` clause considers its arguments as participating in a
 boolean condition. If a property instance on a node or relationship 
-has a set value, then in a `Where()` clause, an equals condition is
+has a set value, then in a `Where()` clause, an equals condition
 for the property is produced:
 
     >>> n = N('', [ P('this', 1), P('that', 2)])
@@ -137,7 +134,7 @@ or as aliases if the `.As` attribute is set to a desired alias.
 
 Cypher functions, such as `count()`, `labels()`, `ltrim()`, and others
 that appear in conditions or return clauses can be produced with the
-`Func` class. Instances should know how to render themselves
+`Func` class. Instances will know how to render themselves
 and their arguments depending on context and the presence of `AS`
 aliases.
 
