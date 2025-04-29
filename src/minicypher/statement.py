@@ -3,7 +3,7 @@ from __future__ import annotations
 from .entities import N, P, R
 
 
-class Statement(object):
+class Statement:
     """Create a Neo4j statement comprised of clauses (and strings) in order."""
 
     def __init__(self, *args, terminate: bool = False, use_params: bool = False):
@@ -14,7 +14,7 @@ class Statement(object):
 
     def __str__(self):
         stash = P.parameterize
-        P.parameterize = True if self.use_params else False
+        P.parameterize = bool(self.use_params)
         ret = " ".join([str(x) for x in self.clauses])
         if self.terminate:
             ret = ret + ";"

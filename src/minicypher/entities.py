@@ -3,19 +3,22 @@ minicypher.entities
 
 Representations of cypher nodes, relationships, properties, paths
 """
+
 from __future__ import annotations
+
 import re
-from pdb import set_trace
 from copy import deepcopy as clone
+from typing import Any
 
 
 def countmaker(max=10000):
     return (x for x in range(max))
 
 
-class Entity(object):
+class Entity:
     """A property graph Entity. Base class."""
-    def __init__(self, var = None):
+
+    def __init__(self, var=None):
         self._as = None
         ct = None
         if var:
@@ -43,30 +46,26 @@ class Entity(object):
 
     def plain_var(self):
         return _plain_var(self)
-        
+
     def As(self, alias):
         return _As(self, alias)
-    
+
     def pattern(self):
         """Render entity as a match pattern."""
-        pass
 
     def condition(self):
         """Render entity as a condition (for WHERE, e.g.)."""
-        pass
 
     def substitution(self) -> str:
         if self._as:
-            return "{}".format(self._as)
-        else:
-            return self.Return()
+            return f"{self._as}"
+        return self.Return()
 
     def Return(self):
         """Render entity as a return value."""
-        pass
 
     def _add_props(self, props):
-        if not type(self) is N and type(self) is not R:
+        if type(self) is not N and type(self) is not R:
             return False
         if not props:
             return True
@@ -83,15 +82,22 @@ class Entity(object):
                 self.props[hdl] = P(handle=hdl, value=props[hdl])
                 self.props[hdl].entity = self
         else:
-            raise RuntimeError("Can't interpret props arg '{}'".format(props))
+            raise RuntimeError(f"Can't interpret props arg '{props}'")
         return True
 
 
 class N(Entity):
     """A property graph Node."""
+
     count = countmaker()
 
-    def __init__(self, label : str = None, props : list[P] = None, As : str = None, **kwargs):
+    def __init__(
+        self,
+        label: str | None = None,
+        props: list[P] | None = None,
+        As: str | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.props = {}
         self.label = label
@@ -103,31 +109,37 @@ class N(Entity):
         return r.relate(self, n)
 
     def pattern(self) -> str:
-        ret = ",".join([p.pattern() for p in
-                        self.props.values() if p.pattern()])
-        if (len(ret)):
-            ret = " {"+ret+"}"
+        ret = ",".join([p.pattern() for p in self.props.values() if p.pattern()])
+        if len(ret):
+            ret = " {" + ret + "}"
         if self.label:
-            ret = "({}:{}{})".format(self._var, self.label, ret)
+            ret = f"({self._var}:{self.label}{ret})"
         else:
-            ret = "({}{})".format(self._var, ret)
+            ret = f"({self._var}{ret})"
         return ret
 
     def condition(self) -> list:
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = " as {}".format(self._as) if self._as else ""
-        ret = "{}{}".format(self._var, ret)
+        ret = f" as {self._as}" if self._as else ""
+        ret = f"{self._var}{ret}"
         return ret
 
 
 class R(Entity):
     """A property graph Relationship or edge."""
+
     count = countmaker()
 
-    def __init__(self, Type : str = None, props : list[P] = None,
-                 As : str = None, _dir : str='_right', **kwargs):
+    def __init__(
+        self,
+        Type: str = None,
+        props: list[P] = None,
+        As: str = None,
+        _dir: str = "_right",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.props = {}
         self.Type = Type
@@ -137,37 +149,40 @@ class R(Entity):
         self._as = As
 
     # n --> m direction
-    def relate(self, n : N, m : N) -> T:
-        return T(n, self, m) if self._dir == '_right' else T(m, self, n)
+    def relate(self, n: N, m: N) -> T:
+        return T(n, self, m) if self._dir == "_right" else T(m, self, n)
 
     def pattern(self) -> str:
-        ret = ",".join([p.pattern() for p in
-                        self.props.values() if p.pattern()])
-        if (len(ret)):
-            ret = " {"+ret+"}"
+        ret = ",".join([p.pattern() for p in self.props.values() if p.pattern()])
+        if len(ret):
+            ret = " {" + ret + "}"
         if self.Type:
-            ret = "-[{}:{}{}]-".format(self._var, self.Type, ret)
+            ret = f"-[{self._var}:{self.Type}{ret}]-"
         else:
-            ret = "-[{}{}]-".format(self._var, ret)
+            ret = f"-[{self._var}{ret}]-"
         return ret
 
     def condition(self) -> str:
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = " as {}".format(self._as) if self._as else ""
-        ret = "{}{}".format(self._var, ret)
-        return ret
+        ret = f" as {self._as}" if self._as else ""
+        return f"{self._var}{ret}"
 
 
 class VarLenR(R):
     """Variable length property graph Relationship or edge."""
-    def __init__(self,
-                 min_len: int = -1,
-                 max_len: int = -1, 
-                 Type : str = None, props : list[P] = None, As : str = None,
-                 _dir : str = '_right',
-                 **kwargs):
+
+    def __init__(
+        self,
+        min_len: int = -1,
+        max_len: int = -1,
+        Type: str | None = None,
+        props: list[P] | None = None,
+        As: str | None = None,
+        _dir: str = "_right",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.props = {}
         self.Type = Type
@@ -176,35 +191,25 @@ class VarLenR(R):
         self.max_len = max_len
 
     def pattern(self) -> str:
-        ret = ",".join([p.pattern() for p in
-                        self.props.values() if p.pattern()])
+        ret = ",".join([p.pattern() for p in self.props.values() if p.pattern()])
         var_len = "*"
-        if self.min_len < 0:
-            min_len_str = ""
-        else:
-            min_len_str = str(self.min_len)
-        if self.max_len < 0:
-            max_len_str = ""
-        else:
-            max_len_str = str(self.max_len)
+        min_len_str = "" if self.min_len < 0 else str(self.min_len)
+        max_len_str = "" if self.max_len < 0 else str(self.max_len)
         if min_len_str or max_len_str:
             var_len += f"{min_len_str}..{max_len_str}"
         if len(ret):
-            ret = " {"+ret+"}"
-        if self.Type:
-            ret = f"-[:{self.Type}{ret}{var_len}]-"
-        else:
-            ret = f"-[{ret}{var_len}]-"
-        return ret
+            ret = " {" + ret + "}"
+        return f"-[:{self.Type}{ret}{var_len}]-" if self.Type else f"-[{ret}{var_len}]-"
 
 
 class N0(N):
     """Completely anonymous node ()."""
+
     def __init__(self):
         super().__init__()
         self._var = None
 
-    def pattern(self) -> "str":
+    def pattern(self) -> str:
         return "()"
 
     def Return(self):
@@ -212,7 +217,8 @@ class N0(N):
 
 
 class R0(R):
-    """Completely anonymous relationship -[]-, i.e. --"""
+    """Completely anonymous relationship -[]-, i.e. --."""
+
     def __init__(self):
         super().__init__()
         self._var = None
@@ -226,10 +232,11 @@ class R0(R):
 
 class P(Entity):
     """A property graph Property."""
+
     count = countmaker()
     parameterize = False
 
-    def __init__(self, handle : str, value : Any = None, As : str = None, **kwargs):
+    def __init__(self, handle: str, value: Any = None, As: str | None = None, **kwargs):
         super().__init__(**kwargs)
         self.handle = handle
         self.value = value
@@ -237,54 +244,44 @@ class P(Entity):
         self.entity = None
         self.param = {self._var: value} if value else None
 
-    def with_value(self, val : Any) -> P:
+    def with_value(self, val: Any) -> P:
         return _value(self, val)
-    
+
     def pattern(self) -> str:
-        if self.value:
-            if not self.parameterize:
-                if type(self.value) is not str:
-                    return "{}:{}".format(self.handle, str(self.value))
-                elif re.match("^\\s*[$]", self.value):  # a parameter
-                    return "{}:{}".format(self.handle, self.value)
-                else:
-                    return "{}:'{}'".format(self.handle, re.sub("'","\\'",self.value))
-            else:
-                return "{}:${}".format(self.handle, self._var)
-        else:
-            return None
+        if self.value is None:
+            return ""
+        if not self.parameterize:
+            if type(self.value) is not str:
+                return f"{self.handle}:{self.value!s}"
+            if re.match("^\\s*[$]", self.value):  # a parameter
+                return f"{self.handle}:{self.value}"
+            return "{}:'{}'".format(self.handle, re.sub("'", "\\'", self.value))
+        return f"{self.handle}:${self._var}"
 
     def condition(self) -> str:
-        if self.value and self.entity:
-            if not self.parameterize:
-                if type(self.value) is not str:
-                    return "{}.{} = {}".format(self.entity._var, self.handle,
-                                               str(self.value))
-                elif re.match("^\\s*[$]", self.value):  # a parameter
-                    return "{}.{} = {}".format(self.entity._var, self.handle,
-                                               self.value)
-                else:
-                    return "{}.{} = '{}'".format(self.entity._var, self.handle,
-                                                 self.value)
-            else:
-                return "{}.{} = ${}".format(self.entity._var, self.handle,
-                                            self._var)
-        else:
-            return None
+        if self.value is None or self.entity is None:
+            return ""
+        if not self.parameterize:
+            if type(self.value) is not str:
+                return f"{self.entity._var}.{self.handle} = {self.value!s}"
+            if re.match("^\\s*[$]", self.value):  # a parameter
+                return f"{self.entity._var}.{self.handle} = {self.value}"
+            return f"{self.entity._var}.{self.handle} = '{self.value}'"
+        return f"{self.entity._var}.{self.handle} = ${self._var}"
 
     def Return(self) -> str:
-        ret = " as {}".format(self._as) if self._as else ""
+        ret = f" as {self._as}" if self._as else ""
         if self.entity:
-            return "{}.{}{}".format(self.entity._var, self.handle, ret)
-        else:
-            return None
+            return f"{self.entity._var}.{self.handle}{ret}"
+        return None
 
 
 class T(Entity):
     """A property graph Triple; i.e., (n)-[r]->(m)."""
+
     count = countmaker()
 
-    def __init__(self, n : N, r : R, m : N):
+    def __init__(self, n: N, r: R, m: N):
         super().__init__()
         self._from = n
         self._to = m
@@ -300,23 +297,23 @@ class T(Entity):
         return [self.edge()]
 
     def pattern(self) -> str:
-        return self._from.pattern()+self._edge.pattern()+">"+self._to.pattern()
+        return self._from.pattern() + self._edge.pattern() + ">" + self._to.pattern()
 
     def condition(self) -> str:
         return self.pattern()
 
     def Return(self) -> list[str]:
-        return [x.Return() for x
-                in (self._from, self._edge, self._to) if x._var]
+        return [x.Return() for x in (self._from, self._edge, self._to) if x._var]
 
 
 class NoDirT(T):
     """A directionless property graph Triple; i.e., (n)-[r]-(m)."""
+
     def __init__(self, *args):
         super().__init__(*args)
 
     def pattern(self) -> str:
-        return self._from.pattern()+self._edge.pattern()+self._to.pattern()
+        return self._from.pattern() + self._edge.pattern() + self._to.pattern()
 
     def nodes(self) -> list[N]:
         return [self._from, self._to]
@@ -329,8 +326,12 @@ class NoDirT(T):
 
 
 class G(Entity):
-    """A property graph Path.
-    Defined as an ordered set of partially overlapping triples."""
+    """
+    A property graph Path.
+
+    Defined as an ordered set of partially overlapping triples.
+    """
+
     count = countmaker()
 
     def __init__(self, *args):
@@ -353,23 +354,21 @@ class G(Entity):
                         scr.append(ent)
                     else:
                         raise RuntimeError(
-                            "Entity '{}' is not valid at arg position {}."
-                            .format(ent, numargs-len(args))
+                            f"Entity '{ent}' is not valid at arg position {numargs - len(args)}.",
                         )
                 elif isinstance(ent, (T, G)):
                     if not self._append(ent):
                         raise RuntimeError(
                             "Adjacent triples/paths do not overlap, "
-                            "at arg position {}.".format(numargs-len(args))
+                            f"at arg position {numargs - len(args)}.",
                         )
                     scr = []  # reset parse
                 else:
                     raise RuntimeError(
-                        "Entity '{}' is not valid at arg position {}."
-                        .format(ent, numargs-len(args))
+                        f"Entity '{ent}' is not valid at arg position {numargs - len(args)}.",
                     )
             elif len(scr) == 1:
-                if (isinstance(scr[0], N) and isinstance(ent, R)):
+                if isinstance(scr[0], N) and isinstance(ent, R):
                     scr.append(ent)
                 elif isinstance(scr[0], R):
                     if isinstance(ent, N):
@@ -377,8 +376,9 @@ class G(Entity):
                     elif isinstance(ent, (T, G)) and scr[0]._join:
                         # may be able to link self to ent with _join hints
                         r = scr[0]
-                        n1 = [x for x in self.triples[-1].nodes()
-                              if x.label == r._join[0]]
+                        n1 = [
+                            x for x in self.triples[-1].nodes() if x.label == r._join[0]
+                        ]
                         n2 = [x for x in ent.nodes() if x.label == r._join[1]]
                         if n1 and n2:
                             t = r.relate(n1[0], n2[0])
@@ -386,33 +386,30 @@ class G(Entity):
                                 raise RuntimeError("WTF error; this should not fail")
                             if not self._append(ent):
                                 raise RuntimeError(
-                                    "Found right-hand node but could not append path"
-                                    )
+                                    "Found right-hand node but could not append path",
+                                )
                             scr = []  # success
                         else:
                             raise RuntimeError(
                                 "Can't find endpoint nodes specified in _join for "
-                                "relationship at arg position {}".format(numargs-len(args)-1)
-                                )
+                                f"relationship at arg position {numargs - len(args) - 1}",
+                            )
                     else:
                         raise RuntimeError(
                             "Ends of relationship are ambiguous; relationship "
-                            "at arg position {} needs _join hints".format(numargs-len(args)-1)
-                            )
+                            f"at arg position {numargs - len(args) - 1} needs _join hints",
+                        )
                 else:
                     raise RuntimeError(
-                        "Entity '{}' is not valid at arg position {}."
-                        .format(ent, numargs-len(args))
+                        f"Entity '{ent}' is not valid at arg position {numargs - len(args)}.",
                     )
-                pass
             elif len(scr) == 2:
                 if isinstance(scr[0], N):
                     success = None
                     if isinstance(ent, N):
                         success = self._append(scr[1].relate(scr[0], ent))
                     elif isinstance(ent, T):
-                        success = self._append(scr[1].relate(scr[0],
-                                                             ent._from))
+                        success = self._append(scr[1].relate(scr[0], ent._from))
                         if success:
                             success = self._append(ent)
                     elif isinstance(ent, G):
@@ -420,46 +417,40 @@ class G(Entity):
                             raise RuntimeError(
                                 "Can't create start triple, "
                                 "to-node is ambiguous, "
-                                "at arg position {}.".format(numargs-len(args))
+                                f"at arg position {numargs - len(args)}.",
                             )
                         success = self._append(
-                            scr[1].relate(scr[0], ent.triples[0]._from))
+                            scr[1].relate(scr[0], ent.triples[0]._from),
+                        )
                     else:
-                        raise RuntimeError(
-                            "Entity '{}' is not valid at arg position {}."
-                            .format(ent, numargs-len(args))
+                        raise TypeError(
+                            f"Entity '{ent}' is not valid at arg position {numargs - len(args)}.",
                         )
                     if not success:
                         raise RuntimeError(
                             "Resulting adjacent triples/paths do not overlap, "
-                            "at arg position {}."
-                            .format(numargs-len(args))
+                            f"at arg position {numargs - len(args)}.",
                         )
                 elif isinstance(scr[0], R):
-                    if not self._append(scr[0].relate(self.triples[-1]._to,
-                                                      scr[1])):
+                    if not self._append(scr[0].relate(self.triples[-1]._to, scr[1])):
                         raise RuntimeError(
                             "Resulting adjacent triples/paths do not overlap, "
-                            "at arg position {}."
-                            .format(numargs-len(args))
+                            f"at arg position {numargs - len(args)}.",
                         )
                 scr = []
             else:
                 raise RuntimeError("Shouldn't happen.")
         if scr:
-            if len(scr) == 2 and isinstance(
-                    scr[0], R) and isinstance(scr[1], N):
+            if len(scr) == 2 and isinstance(scr[0], R) and isinstance(scr[1], N):
                 if len(self.triples) > 1:
                     raise RuntimeError(
                         "Can't create end triple, from-node is ambiguous, "
-                        "at arg position {}.".format(numargs-len(args))
+                        f"at arg position {numargs - len(args)}.",
                     )
-                if not self._append(
-                        scr[0].relate(self.triples[-1]._to, scr[1])):
+                if not self._append(scr[0].relate(self.triples[-1]._to, scr[1])):
                     raise RuntimeError(
                         "Resulting adjacent triples/paths do not overlap, "
-                        "at arg position {}."
-                        .format(numargs-len(args))
+                        f"at arg position {numargs - len(args)}.",
                     )
             else:
                 raise RuntimeError("Args do not define a complete Path.")
@@ -472,23 +463,20 @@ class G(Entity):
                 s = s.triples[-1]
             if isinstance(t, G):
                 t = t.triples[0]
-            if s._from == t._from or (
-                    s._from._var and s._from._var == t._from._var):
+            if s._from == t._from or (s._from._var and s._from._var == t._from._var):
                 return 0b001
-            if s._from == t._to or (
-                    s._from._var and s._from._var == t._to._var):
+            if s._from == t._to or (s._from._var and s._from._var == t._to._var):
                 return 0b010
-            if s._to == t._from or (
-                    s._to._var and s._to._var == t._from._var):
+            if s._to == t._from or (s._to._var and s._to._var == t._from._var):
                 return 0b011
-            if s._to == t._to or (
-                    s._to._var and s._to._var == t._to._var):
+            if s._to == t._to or (s._to._var and s._to._var == t._to._var):
                 return 0b100
             return -1
 
         if not isinstance(ent, (T, G)):
-            raise RuntimeError("Can't append a {} to a Path."
-                               .format(type(ent).__name__))
+            raise RuntimeError(
+                f"Can't append a {type(ent).__name__} to a Path.",
+            )
         if self.triples:
             ovr = _overlap(self.triples[-1], ent)
             if ovr == 0:
@@ -522,29 +510,29 @@ class G(Entity):
             trp = trps.pop(0)
             if not acc:
                 return jn(trps, [trp._from, trp._edge, ">", trp._to], ret)
+            if trp._from == acc[0]:
+                acc[0:0] = [trp._to, "<", trp._edge]
+            elif trp._from == acc[-1]:
+                acc.extend([trp._edge, ">", trp._to])
+            elif trp._to == acc[0]:
+                acc[0:0] = [trp._from, trp._edge, ">"]
+            elif trp._to == acc[-1]:
+                acc.extend(["<", trp._edge, trp._from])
             else:
-                if trp._from == acc[0]:
-                    acc[0:0] = [trp._to, "<", trp._edge]
-                elif trp._from == acc[-1]:
-                    acc.extend([trp._edge, ">", trp._to])
-                elif trp._to == acc[0]:
-                    acc[0:0] = [trp._from, trp._edge, ">"]
-                elif trp._to == acc[-1]:
-                    acc.extend(["<", trp._edge, trp._from])
-                else:
-                    ret.append(acc)
-                    acc = [trp._from, trp._edge, ">", trp._to]
-                return jn(trps, acc, ret)
-            pass
+                ret.append(acc)
+                acc = [trp._from, trp._edge, ">", trp._to]
+            return jn(trps, acc, ret)
+
         if not self._pattern:
             trps = clone(self.triples)
             grps = jn(trps, [], [])
             pats = []
             for grp in grps:
                 pats.append(
-                    "".join([x.pattern() if not isinstance(x, str) else x
-                             for x in grp])
-                    )
+                    "".join(
+                        [x.pattern() if not isinstance(x, str) else x for x in grp],
+                    ),
+                )
             self._pattern = ", ".join(pats)
         return self._pattern
 
@@ -557,10 +545,11 @@ class G(Entity):
             s.add(t._from, t._to)
         return ", ".join([_return(x) for x in s if x._var])
 
+
 # modifiers
 
 
-def _As(ent : Entity, alias : str) -> Entity:
+def _As(ent: Entity, alias: str) -> Entity:
     """Return copy of ent with As alias set."""
     if isinstance(ent, T):
         return ent
@@ -569,7 +558,7 @@ def _As(ent : Entity, alias : str) -> Entity:
     return ret
 
 
-def _plain(ent : Entity) -> Entity:
+def _plain(ent: Entity) -> Entity:
     """Return entity without properties."""
     ret = None
     if isinstance(ent, (N, R)):
@@ -588,14 +577,14 @@ def _plain(ent : Entity) -> Entity:
     return ret
 
 
-def _anon(ent : Entity) -> Entity:
+def _anon(ent: Entity) -> Entity:
     """Return entity without variable name."""
     ret = clone(ent)
     ret._var = ""
     return ret
 
 
-def _var(ent : Entity) -> Entity:
+def _var(ent: Entity) -> Entity:
     """Return entity without label or type."""
     ret = None
     if isinstance(ent, (N, R)):
@@ -614,20 +603,22 @@ def _var(ent : Entity) -> Entity:
     return ret
 
 
-def _plain_var(ent : Entity) -> Entity:
-    """Return entity with only the variable, no label or properties"""
+def _plain_var(ent: Entity) -> Entity:
+    """Return entity with only the variable, no label or properties."""
     return _plain(_var(ent))
 
 
-def _value(ent : Entity, val : Any) -> Entity:
+def _value(ent: Entity, val: Any) -> Entity:
     """Return a copy of Property with value set to val. Noop for other entities."""
     ret = ent
     if isinstance(ent, P):
         ret = clone(ent)
         ret.value = val
     return ret
-    
+
+
 # rendering contexts
+
 
 def _pattern(ent):
     if type(ent) == str:
