@@ -4,17 +4,18 @@ minicypher.clauses
 Representations of Cypher statement clauses, statements,
 and statement parameters.
 """
+
 from __future__ import annotations
+
 from string import Template
-from .entities import (
-    N, R, P, _return, _condition, _pattern, _substitution
-    )
+
+from .entities import P, _condition, _pattern, _return, _substitution
 from .functions import Func
-from pdb import set_trace
 
 
-class Clause(object):
+class Clause:
     """Represents a generic Cypher clause."""
+
     template = Template("$slot1")
     joiner = ", "
 
@@ -36,12 +37,13 @@ class Clause(object):
             else:
                 values.append(str(c))
         return self.template.substitute(
-            slot1=self.joiner.join(values)
-            )
+            slot1=self.joiner.join(values),
+        )
 
 
 class Match(Clause):
     """Create a MATCH clause with the arguments."""
+
     template = Template("MATCH $slot1")
 
     @staticmethod
@@ -53,8 +55,11 @@ class Match(Clause):
 
 
 class Where(Clause):
-    """Create a WHERE clause with the arguments
-    (joining conditions with 'op')."""
+    """
+    Create a WHERE clause with the arguments
+    (joining conditions with 'op').
+    """
+
     template = Template("WHERE $slot1")
     joiner = " {} "
 
@@ -62,7 +67,7 @@ class Where(Clause):
     def context(arg) -> str:
         return _condition(arg)
 
-    def __init__(self, *args, op='AND'):
+    def __init__(self, *args, op="AND"):
         super().__init__(*args, op=op)
         self.op = op
 
@@ -78,23 +83,27 @@ class Where(Clause):
             else:
                 values.append(str(c))
         return self.template.substitute(
-            slot1=self.joiner.format(self.op).join(values)
-            )
+            slot1=self.joiner.format(self.op).join(values),
+        )
 
 
 class With(Clause):
     """Create a WITH clause with the arguments."""
+
     template = Template("WITH $slot1")
 
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(arg : object) -> str:
+    def context(arg: object) -> str:
         return _return(arg)
+
 
 class Create(Clause):
     """Create a CREATE clause with the arguments."""
+
     template = Template("CREATE $slot1")
+
     @staticmethod
     def context(arg) -> str:
         return _pattern(arg)
@@ -105,7 +114,9 @@ class Create(Clause):
 
 class Merge(Clause):
     """Create a MERGE clause with the arguments."""
+
     template = Template("MERGE $slot1")
+
     @staticmethod
     def context(arg) -> str:
         return _pattern(arg)
@@ -116,13 +127,14 @@ class Merge(Clause):
 
 class Remove(Clause):
     """Create a REMOVE clause with the arguments."""
+
     template = Template("REMOVE $slot1")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @staticmethod    
-    def context(arg : object) -> str:
+    @staticmethod
+    def context(arg: object) -> str:
         return _substitution(arg)
 
     def __str__(self):
@@ -136,14 +148,13 @@ class Remove(Clause):
             item = self.kwargs["label"]
             sep = ":"
         return self.template.substitute(
-            slot1="{}{}{}".format(self.context(ent),sep,item)
-            )
-        
+            slot1=f"{self.context(ent)}{sep}{item}",
+        )
+
 
 class Set(Clause):
-    """
-    Create a SET clause with the arguments. (Only property arguments matter.)
-    """
+    """Create a SET clause with the arguments. (Only property arguments matter)."""
+
     template = Template("SET $slot1")
 
     @staticmethod
@@ -162,15 +173,16 @@ class Set(Clause):
                 values.extend([str(x) for x in c])
             else:
                 values.append(str(c))
-        if 'update' in self.kwargs:
-            values = [x.replace("=","+=") for x in values]
+        if "update" in self.kwargs:
+            values = [x.replace("=", "+=") for x in values]
         return self.template.substitute(
-            slot1=self.joiner.join(values)
-            )
+            slot1=self.joiner.join(values),
+        )
 
 
 class OnCreateSet(Set):
     """Create an ON CREATE SET clause for a MERGE with the arguments."""
+
     template = Template("ON CREATE SET $slot1")
 
     def __init__(self, *args):
@@ -179,6 +191,7 @@ class OnCreateSet(Set):
 
 class OnMatchSet(Set):
     """Create an ON CREATE SET clause for a MERGE with the arguments."""
+
     template = Template("ON MATCH SET $slot1")
 
     def __init__(self, *args):
@@ -187,18 +200,20 @@ class OnMatchSet(Set):
 
 class Return(Clause):
     """Create a RETURN clause with the arguments."""
+
     template = Template("RETURN $slot1")
 
     @staticmethod
     def context(arg) -> str:
         return _substitution(arg)
-    
+
     def __init__(self, *args):
         super().__init__(*args)
 
 
 class OptionalMatch(Clause):
     """Create an OPTIONAL MATCH clause with the arguments."""
+
     template = Template("OPTIONAL MATCH $slot1")
 
     @staticmethod
@@ -211,18 +226,20 @@ class OptionalMatch(Clause):
 
 class Collect(Clause):
     """Create a COLLECT clause with the arguments."""
+
     template = Template("COLLECT $slot1")
 
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(arg : object) -> str:
+    def context(self, arg: object) -> str:
         return _substitution(arg)
 
 
-# should be a Func? 
+# should be a Func?
 class Unwind(Clause):
     """Create an UNWIND clause with the arguments."""
+
     template = Template("UNWIND $slot1")
 
     def __init__(self, *args):
@@ -231,10 +248,11 @@ class Unwind(Clause):
 
 class As(Clause):
     """Create an AS clause with the arguments."""
+
     template = Template("AS $slot1")
 
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(arg : object) -> str:
+    def context(self, arg: object) -> str:
         return _return(arg)

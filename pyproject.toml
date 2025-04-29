@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "minicypher"
-version = "0.1.1"
+version = "0.1.2"
 description = "Programmatically manipulate Neo4j Cypher language constructs"
 authors = ["Mark A. Jensen <mark.jensen@nih.gov>", "Nelson Moore <nelson.moore@essential-soft.com>"]
 readme = "README.md"
