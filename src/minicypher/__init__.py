@@ -10,5 +10,5 @@ from .functions import (count, exists, labels, Not, And, Or, group,
                         is_null, is_not_null, Cat)
 from .clauses import (Match, Where, With, Create, Merge, Remove, Set,
                       OnCreateSet, OnMatchSet, OptionalMatch, Collect,
-                      Unwind, As, Return)
+                      Unwind, As, Return, DetachDelete, Delete)
 from .statement import (Statement)
