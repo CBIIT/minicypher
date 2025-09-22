@@ -122,7 +122,7 @@ class N(Entity):
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = f" as {self._as}" if self._as else ""
+        ret = f" AS {self._as}" if self._as else ""
         ret = f"{self._var}{ret}"
         return ret
 
@@ -166,7 +166,7 @@ class R(Entity):
         return [p.condition() for p in self.props.values()]
 
     def Return(self) -> str:
-        ret = f" as {self._as}" if self._as else ""
+        ret = f" AS {self._as}" if self._as else ""
         return f"{self._var}{ret}"
 
 
@@ -263,14 +263,14 @@ class P(Entity):
             return ""
         if not self.parameterize:
             if type(self.value) is not str:
-                return f"{self.entity._var}.{self.handle} = {self.value!s}"
+                return f"{self.entity._var}.{self.handle} = {self.value!s}" ## !s ??
             if re.match("^\\s*[$]", self.value):  # a parameter
                 return f"{self.entity._var}.{self.handle} = {self.value}"
             return f"{self.entity._var}.{self.handle} = '{self.value}'"
         return f"{self.entity._var}.{self.handle} = ${self._var}"
 
     def Return(self) -> str:
-        ret = f" as {self._as}" if self._as else ""
+        ret = f" AS {self._as}" if self._as else ""
         if self.entity:
             return f"{self.entity._var}.{self.handle}{ret}"
         return None
@@ -621,24 +621,24 @@ def _value(ent: Entity, val: Any) -> Entity:
 
 
 def _pattern(ent):
-    if type(ent) == str:
+    if type(ent) is str:
         return ent
     return ent.pattern()
 
 
 def _condition(ent):
-    if type(ent) == str:
+    if type(ent) is str:
         return ent
     return ent.condition()
 
 
 def _substitution(ent):
-    if type(ent) == str:
+    if type(ent) is str:
         return ent
     return ent.substitution()
 
 
 def _return(ent):
-    if type(ent) == str:
+    if type(ent) is str:
         return ent
     return ent.Return()

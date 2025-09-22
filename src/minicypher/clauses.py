@@ -247,11 +247,13 @@ class Collect(Clause):
 
     template = Template("COLLECT $slot1")
 
+    @staticmethod
+    def context(arg) -> str:
+        return _substitution(arg)
+
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(self, arg: object) -> str:
-        return _substitution(arg)
 
 
 # should be a Func?
@@ -269,8 +271,10 @@ class As(Clause):
 
     template = Template("AS $slot1")
 
+    @staticmethod
+    def context(arg) -> str:
+        return _return(arg)
+
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(self, arg: object) -> str:
-        return _return(arg)
