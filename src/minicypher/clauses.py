@@ -125,6 +125,24 @@ class Merge(Clause):
         super().__init__(*args)
 
 
+class Delete(Clause):
+    """Create a DELETE clause with the arguments."""
+
+    template = Template("DELETE $slot1")
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+
+class DetachDelete(Clause):
+    """Create a DETACH DELETE clause with the arguments."""
+
+    template = Template("DETACH DELETE $slot1")
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+
 class Remove(Clause):
     """Create a REMOVE clause with the arguments."""
 
@@ -229,11 +247,13 @@ class Collect(Clause):
 
     template = Template("COLLECT $slot1")
 
+    @staticmethod
+    def context(arg) -> str:
+        return _substitution(arg)
+
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(self, arg: object) -> str:
-        return _substitution(arg)
 
 
 # should be a Func?
@@ -251,8 +271,10 @@ class As(Clause):
 
     template = Template("AS $slot1")
 
+    @staticmethod
+    def context(arg) -> str:
+        return _return(arg)
+
     def __init__(self, *args):
         super().__init__(*args)
 
-    def context(self, arg: object) -> str:
-        return _return(arg)

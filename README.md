@@ -24,7 +24,7 @@ Suppose you want to create the following Cypher statement for execution
     RETURN m.title as Title;
 
 There are three clauses, MATCH, WHERE, and RETURN, in this statement.
-The use of variable `m` indicates that value of the `title` property
+The use of variable `m` indicates that the value of the `title` property
 in the RETURN should come from the Movie node matched in the MATCH pattern.
 Variable `a` in the statement indicates that the Actor node matched in
 the MATCH pattern should be constrained by the equality in the WHERE clause.

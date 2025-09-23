@@ -34,12 +34,12 @@ def test_entities():
     assert n.Return() == n._var
     assert m.Return() == m._var
 
-    assert _return(_As(m, "eddie")) == f"{m._var} as eddie"
-    assert m.As("eddie").Return() == f"{m._var} as eddie"
+    assert _return(_As(m, "eddie")) == f"{m._var} AS eddie"
+    assert m.As("eddie").Return() == f"{m._var} AS eddie"
 
     x = N(label="thing", As="dude")
     assert x.label == "thing" and x._as == "dude"
-    assert x.Return() == f"{x._var} as dude"
+    assert x.Return() == f"{x._var} AS dude"
 
     y = N(var="y")
     assert y._var == "y"

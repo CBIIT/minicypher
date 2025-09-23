@@ -69,6 +69,28 @@ def test_clauses():
     assert str(st) == "WHERE n0.this = 1 OR n1.that = 2"
     st = Where(Cat(n.props['this'],"> 1"))
     assert str(st) == "WHERE n0.this > 1"
+
+    delete = Delete(n)
+    assert isinstance(delete, Delete)
+    assert isinstance(delete, Clause)
+    assert str(delete) == "DELETE {}".format(n._var)
+    
+    detach_delete = DetachDelete(n)
+    assert isinstance(detach_delete, DetachDelete)
+    assert isinstance(detach_delete, Clause)
+    assert str(detach_delete) == "DETACH DELETE {}".format(n._var)
+
+    delete_multiple = Delete(n, m)
+    assert str(delete_multiple) == "DELETE {}, {}".format(n._var, m._var)
+    
+    detach_delete_multiple = DetachDelete(n, m)
+    assert str(detach_delete_multiple) == "DETACH DELETE {}, {}".format(n._var, m._var)
+
+    delete_rel = Delete(t.edge())
+    assert str(delete_rel) == "DELETE {}".format(t.edge()._var)
+    
+    detach_delete_rel = DetachDelete(t.edge())
+    assert str(detach_delete_rel) == "DETACH DELETE {}".format(t.edge()._var)
     
 def test_as_substitutions():
     # AS substitutions

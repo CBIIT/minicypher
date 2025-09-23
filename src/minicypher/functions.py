@@ -127,7 +127,7 @@ class Cat(Func):
     """
     Concatentate string representations of the arguments with spaces.
 
-    Example: to produce "count(a) > 1", use concat(count("a"),"> 1").
+    Example: to produce "count(a) > 1", use Cat(count("a"),"> 1").
     """
 
     @staticmethod
